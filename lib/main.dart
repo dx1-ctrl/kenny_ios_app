@@ -75,7 +75,7 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     'Use 10 slices! 🍕',
     'Only 3 toppings!',
     'Cover the center!',
-    'Don't touch the center!',
+    "Don't touch the center!",
     'Spam the edges!',
     'Be precise! 🧠'
   ];
