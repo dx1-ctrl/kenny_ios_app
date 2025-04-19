@@ -1,5 +1,4 @@
 // PizzaMaster Ultra v1.2.0 - Game Modes + Advanced Scoring
-// Now includes: accuracy rewards, mode-based scoring, bake prediction, and failure conditions
 
 import 'dart:async';
 import 'dart:math';
@@ -72,12 +71,12 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
   String prediction = '';
 
   final List<String> fakeOrders = [
-    'Use 10 slices! 🍕',
-    'Only 3 toppings!',
-    'Cover the center!',
+    "Use 10 slices! 🍕",
+    "Only 3 toppings!",
+    "Cover the center!",
     "Don't touch the center!",
-    'Spam the edges!',
-    'Be precise! 🧠'
+    "Spam the edges!",
+    "Be precise! 🧠"
   ];
 
   @override
@@ -173,7 +172,7 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
 
     if (widget.mode == 'Speed') message += '\n(Speed Mode Bonus Applied)';
     if (widget.mode == 'Chaos') message += '\n(You survived Chaos Mode 😮‍💨)';
-    if (forced) message += '\n\n(Time's up!)';
+    if (forced) message += "\n\n(Time's up!)";
 
     showDialog(
       context: context,
