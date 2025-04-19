@@ -1,85 +1,86 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(PizzaGameApp());
 }
 
-class MyApp extends StatelessWidget {
+class PizzaGameApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Drag and Drop Game',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: DragDropGame(),
+      title: 'Pizza Making Game',
+      debugShowCheckedModeBanner: false,
+      home: PizzaGameScreen(),
     );
   }
 }
 
-class DragDropGame extends StatefulWidget {
+class PizzaGameScreen extends StatefulWidget {
   @override
-  _DragDropGameState createState() => _DragDropGameState();
+  _PizzaGameScreenState createState() => _PizzaGameScreenState();
 }
 
-class _DragDropGameState extends State<DragDropGame> {
+class _PizzaGameScreenState extends State<PizzaGameScreen> {
+  final List<Offset> pepperoniPositions = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Drag and Drop Game'),
+        title: Text('Make Your Pizza!'),
+        backgroundColor: Colors.deepOrange,
       ),
-      body: Center(
-        child: DragTarget<String>(
-          onAccept: (data) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Dropped $data')),
-            );
-          },
-          builder: (context, candidateData, rejectedData) {
-            return Container(
-              width: 200,
-              height: 200,
-              color: Colors.blueAccent,
-              child: Center(
-                child: Text(
-                  'Drop Here',
-                  style: TextStyle(color: Colors.white),
-                ),
+      body: Stack(
+        children: [
+          // Pizza base
+          Align(
+            alignment: Alignment.center,
+            child: DragTarget<String>(
+              onAcceptWithDetails: (details) {
+                final box = context.findRenderObject() as RenderBox;
+                final localOffset = box.globalToLocal(details.offset);
+                setState(() {
+                  pepperoniPositions.add(localOffset);
+                });
+              },
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  width: 300,
+                  height: 300,
+                  child: Image.asset('assets/pizza_base.png'),
+                );
+              },
+            ),
+          ),
+
+          // Placed pepperonis
+          ...pepperoniPositions.map((pos) {
+            return Positioned(
+              left: pos.dx - 25,
+              top: pos.dy - 25,
+              child: Image.asset(
+                'assets/pepperoni.png',
+                width: 50,
+                height: 50,
               ),
             );
-          },
-        ),
-      ),
-      floatingActionButton: Draggable<String>(
-        data: 'Item 1',
-        child: Container(
-          width: 50,
-          height: 50,
-          color: Colors.red,
-          child: Center(
-            child: Text(
-              'Drag Me',
-              style: TextStyle(color: Colors.white),
+          }),
+
+          // Draggable pepperoni
+          Positioned(
+            bottom: 50,
+            left: 50,
+            child: Draggable<String>(
+              data: 'pepperoni',
+              feedback: Image.asset('assets/pepperoni.png', width: 50),
+              childWhenDragging: Opacity(
+                opacity: 0.4,
+                child: Image.asset('assets/pepperoni.png', width: 50),
+              ),
+              child: Image.asset('assets/pepperoni.png', width: 50),
             ),
           ),
-        ),
-        feedback: Container(
-          width: 50,
-          height: 50,
-          color: Colors.red.withOpacity(0.5),
-          child: Center(
-            child: Text(
-              'Drag Me',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ),
-        childWhenDragging: Container(
-          width: 50,
-          height: 50,
-          color: Colors.grey,
-        ),
+        ],
       ),
     );
   }
