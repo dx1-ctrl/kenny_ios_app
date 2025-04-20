@@ -59,8 +59,6 @@ class ModeSelector extends StatelessWidget {
   }
 }
 
-// --- PizzaGameScreen START ---
-
 class PizzaGameScreen extends StatefulWidget {
   final String mode;
   PizzaGameScreen({required this.mode});
@@ -210,7 +208,7 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
   }
 
   void showResults({bool forced = false}) {
-    String message = 'Score: \$score\nBest Pizza Ever: \$bestScore';
+    String message = 'Score: $score\nBest Pizza Ever: $bestScore';
     message += '\n\n';
     if (pepperoniCount == 0) message += 'Bro... ZERO toppings.';
     else if (pepperoniCount < 3) message += 'Undercooked vibe 😕';
@@ -222,8 +220,8 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text("Results - \${widget.mode} Mode"),
-        content: Text(message),
+        title: Text("Results - ${widget.mode} Mode"),
+        content: Text(message.replaceAll('\n', '\n')),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text("OK"))],
       ),
     );
@@ -264,9 +262,8 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orange[50],
       appBar: AppBar(
-        title: Text('PizzaMaster Ultra - \${widget.mode} Mode'),
+        title: Text('PizzaMaster Ultra - ${widget.mode} Mode'),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -341,18 +338,18 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Pepperoni: \$pepperoniCount", style: TextStyle(fontSize: 16)),
-                  Text("Order: \$fakeOrder", style: TextStyle(fontSize: 16)),
-                  Text("Time: \$secondsLeft", style: TextStyle(
+                  Text("Pepperoni: $pepperoniCount", style: TextStyle(fontSize: 16)),
+                  Text("Order: $fakeOrder", style: TextStyle(fontSize: 16)),
+                  Text("Time: $secondsLeft", style: TextStyle(
                     fontSize: 16,
                     color: secondsLeft <= 10 ? Colors.red : Colors.black,
                   )),
                   if (comboActive)
-                    Text("🔥 COMBO x\$comboCount!", style: TextStyle(fontSize: 18)),
+                    Text("🔥 COMBO x$comboCount!", style: TextStyle(fontSize: 18)),
                   SizedBox(height: 4),
-                  Text("🔮 Prediction: \$prediction", style: TextStyle(fontStyle: FontStyle.italic)),
+                  Text("🔮 Prediction: $prediction", style: TextStyle(fontStyle: FontStyle.italic)),
                   SizedBox(height: 6),
-                  Text("🏆 Best Pizza: \$bestScore", style: TextStyle(fontWeight: FontWeight.bold))
+                  Text("🏆 Best Pizza: $bestScore", style: TextStyle(fontWeight: FontWeight.bold))
                 ],
               ),
             ),
@@ -378,5 +375,3 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     );
   }
 }
-
-// --- PizzaGameScreen END ---
