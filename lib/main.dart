@@ -1,8 +1,7 @@
-// PizzaMaster Ultra v1.2.0 - Game Modes + Advanced Scoring
-
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(PizzaGameApp());
 
@@ -69,6 +68,9 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
   double pizzaRadius = 150;
   Offset pizzaCenter = Offset.zero;
   String prediction = '';
+  int score = 0;
+  int bestScore = 0;
+  bool customCrust = false;
 
   final List<String> fakeOrders = [
     "Use 10 slices! 🍕",
@@ -86,6 +88,19 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     fakeOrder = (fakeOrders..shuffle()).first;
     predictRating();
     startCountdown();
+    loadBestScore();
+  }
+
+  Future<void> loadBestScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      bestScore = prefs.getInt('bestPizzaScore') ?? 0;
+    });
+  }
+
+  Future<void> saveBestScore(int newScore) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('bestPizzaScore', newScore);
   }
 
   void applyModeSettings() {
@@ -120,6 +135,18 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     predictRating();
   }
 
+  void predictRating() {
+    if (pepperoniCount == 0) {
+      prediction = 'This will be SAD 😭';
+    } else if (pepperoniCount >= 12) {
+      prediction = 'Overloaded!! Might burn!';
+    } else if (comboCount >= 3) {
+      prediction = '🔥 Combo King Pizza';
+    } else {
+      prediction = 'Solid vibes so far 👍';
+    }
+  }
+
   void startBaking({bool forced = false}) {
     if (isBaking || isBaked) return;
     setState(() {
@@ -134,6 +161,11 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
           isBaking = false;
           isBaked = true;
         });
+        score = calculateScore();
+        if (score > bestScore) {
+          bestScore = score;
+          saveBestScore(score);
+        }
         showResults(forced: forced);
         return false;
       }
@@ -141,38 +173,35 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
     });
   }
 
-  void predictRating() {
-    if (pepperoniCount == 0) {
-      prediction = 'This will be SAD 😭';
-    } else if (pepperoniCount >= 12) {
-      prediction = 'Overloaded!! Might burn!';
-    } else if (comboCount >= 3) {
-      prediction = '🔥 Combo King Pizza';
-    } else {
-      prediction = 'Solid vibes so far 👍';
-    }
-  }
-
-  void showResults({bool forced = false}) {
+  int calculateScore() {
+    int base = pepperoniCount * 10;
     int centerHits = pepperoniPositions.where((pos) {
       final dx = pos.dx - pizzaCenter.dx;
       final dy = pos.dy - pizzaCenter.dy;
-      final dist = sqrt(dx * dx + dy * dy);
-      return dist < 50;
+      return sqrt(dx * dx + dy * dy) < 50;
+    }).length;
+    int edgeBonus = pepperoniPositions.where((pos) {
+      final dx = pos.dx - pizzaCenter.dx;
+      final dy = pos.dy - pizzaCenter.dy;
+      double d = sqrt(dx * dx + dy * dy);
+      return d > 90 && d < 140;
     }).length;
 
-    String message = '';
-    if (pepperoniCount == 0) message = 'Bro... ZERO toppings.';
-    else if (pepperoniCount < 3) message = 'Undercooked vibe 😕';
-    else if (pepperoniCount > 18) message = 'This is chaos incarnate.';
-    else if (centerHits < 2) message = 'Center looks empty.';
-    else if (centerHits > 5) message = 'Center is OVERLOADED.';
-    else if (comboCount >= 3) message = '🔥 You nailed the combo zone!';
-    else message = 'Honestly, this looks great chef 🧑‍🍳';
+    int total = base + (comboCount * 15) + (centerHits * 5) + (edgeBonus * 3);
+    if (widget.mode == 'Speed') total += 20;
+    if (widget.mode == 'Chaos') total += 40;
+    return total;
+  }
 
-    if (widget.mode == 'Speed') message += '\n(Speed Mode Bonus Applied)';
-    if (widget.mode == 'Chaos') message += '\n(You survived Chaos Mode 😮‍💨)';
-    if (forced) message += "\n\n(Time's up!)";
+  void showResults({bool forced = false}) {
+    String message = 'Score: $score\nBest Pizza Ever: $bestScore';
+    message += '\n\n';
+    if (pepperoniCount == 0) message += 'Bro... ZERO toppings.';
+    else if (pepperoniCount < 3) message += 'Undercooked vibe 😕';
+    else if (pepperoniCount > 18) message += 'This is chaos incarnate.';
+    else message += 'Honestly, this looks great chef 🧑‍🍳';
+
+    if (forced) message += '\n\n(Time\'s up!)';
 
     showDialog(
       context: context,
@@ -227,6 +256,11 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
             icon: Icon(Icons.refresh),
             tooltip: 'Reset Pizza',
             onPressed: resetPizza,
+          ),
+          IconButton(
+            icon: Icon(customCrust ? Icons.blur_on : Icons.blur_off),
+            tooltip: 'Toggle Custom Crust',
+            onPressed: () => setState(() => customCrust = !customCrust),
           )
         ],
       ),
@@ -242,6 +276,12 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
                   return Container(
                     width: 300,
                     height: 300,
+                    decoration: BoxDecoration(
+                      border: customCrust
+                          ? Border.all(color: Colors.redAccent, width: 6, style: BorderStyle.solid)
+                          : null,
+                      borderRadius: BorderRadius.circular(150),
+                    ),
                     child: Image.asset('assets/pizza_base.png'),
                   );
                 },
@@ -294,7 +334,9 @@ class _PizzaGameScreenState extends State<PizzaGameScreen> {
                   if (comboActive)
                     Text("🔥 COMBO x$comboCount!", style: TextStyle(fontSize: 18)),
                   SizedBox(height: 4),
-                  Text("🔮 Prediction: $prediction", style: TextStyle(fontStyle: FontStyle.italic))
+                  Text("🔮 Prediction: $prediction", style: TextStyle(fontStyle: FontStyle.italic)),
+                  SizedBox(height: 6),
+                  Text("🏆 Best Pizza: $bestScore", style: TextStyle(fontWeight: FontWeight.bold))
                 ],
               ),
             ),
